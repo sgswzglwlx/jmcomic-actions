@@ -1,139 +1,53 @@
-name: JMComic 漫画下载
+name: JM Downloader
 
 on:
   workflow_dispatch:
     inputs:
-      album_ids:
-        description: '漫画ID（多个用逗号分隔，如 123456,789012）'
+      ids:
+        description: '漫画ID (逗号分隔)'
         required: true
         type: string
-      search_keyword:
-        description: '搜索关键词（留空则按ID下载）'
-        required: false
-        type: string
-      search_page:
-        description: '搜索页码'
-        required: false
-        default: '1'
-        type: string
-      output_format:
-        description: '输出格式'
-        required: true
-        default: 'images'
-        type: choice
-        options:
-          - images
-          - pdf
-
-env:
-  JM_DOWNLOAD_DIR: ${{ github.workspace }}/downloads
 
 jobs:
   download:
     runs-on: ubuntu-latest
     steps:
-      - name: 检出仓库
-        uses: actions/checkout@v4
-
-      - name: 设置 Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: 安装依赖
-        run: |
-          pip install jmcomic
-
-      - name: 搜索漫画
-        if: ${{ github.event.inputs.search_keyword != '' }}
-        run: |
-          python3 -c "
-          from jmcomic import create_option_by_str, JmModuleConfig
-          
-          opt = create_option_by_str('''
-client:
-  impl: api
-  postman:
-    type: curl_cffi
-    meta_data:
-      impersonate: chrome
-  retry_times: 5
-log: true
-''')
-          client = opt.new_jm_client()
-          result = client.search_album('${{ github.event.inputs.search_keyword }}', page=${{ github.event.inputs.search_page }})
-          print(f'{\"ID\":>8} | {\"标题\":^42} | {\"章节\":>4} | {\"作者\":^16}')
-          print('-' * 80)
-          for album in result:
-              print(f'{album.id:>8} | {album.name[:40]:40s} | {album.page_count:>4} | {album.author[:15]:15s}')
-          " > search_result.txt
-          cat search_result.txt
-
-      - name: 下载漫画
-        if: ${{ github.event.inputs.search_keyword == '' }}
+      - run: pip install jmcomic
+      - name: Download
         env:
-          ALBUM_IDS: ${{ github.event.inputs.album_ids }}
+          IDS: ${{ github.event.inputs.ids }}
         run: |
           python3 -c "
-          import os
-          from jmcomic import create_option_by_str, download_batch
-          
-          ids = [x.strip() for x in os.environ['ALBUM_IDS'].split(',')]
-          
-          opt = create_option_by_str(f'''
-client:
-  impl: api
-  postman:
-    type: curl_cffi
-    meta_data:
-      impersonate: chrome
-  retry_times: 5
-dir_rule:
-  base_dir: {os.environ['JM_DOWNLOAD_DIR']}
-  rule: Bd_Aauthor_Atitle_Pindex
-download:
-  cache: true
-  image:
-    decode: true
-  threading:
-    image: 30
-    photo: 8
-log: true
-plugins:
-  after_photo:
-    - plugin: img2pdf
-      kwargs:
-        pdf_dir: {os.environ['JM_DOWNLOAD_DIR']}/pdf
-        filename_rule: Pid
-''' if '${{ github.event.inputs.output_format }}' == 'pdf' else f'''
-client:
-  impl: api
-  postman:
-    type: curl_cffi
-    meta_data:
-      impersonate: chrome
-  retry_times: 5
-dir_rule:
-  base_dir: {os.environ['JM_DOWNLOAD_DIR']}
-  rule: Bd_Aauthor_Atitle_Pindex
-download:
-  cache: true
-  image:
-    decode: true
-  threading:
-    image: 30
-    photo: 8
-log: true
-''')
-          
-          print(f'下载 {len(ids)} 个漫画: {ids}')
-          download_batch(ids, opt)
-          print('下载完成!')
-          "
+import os
+from jmcomic import download_batch, create_option_by_str
 
-      - name: 上传下载文件
-        uses: actions/upload-artifact@v4
+opt = create_option_by_str('''
+client:
+  impl: api
+  postman:
+    type: curl_cffi
+    meta_data:
+      impersonate: chrome
+  retry_times: 5
+dir_rule:
+  base_dir: downloads
+  rule: Bd_Aauthor_Atitle_Pindex
+download:
+  threading:
+    image: 30
+    photo: 8
+log: false
+''')
+ids = [x.strip() for x in os.environ['IDS'].split(',')]
+download_batch(ids, opt)
+print('Done:', ids)
+"
+      - uses: actions/upload-artifact@v4
         with:
-          name: jmcomic-downloads
+          name: comics
           path: downloads/
-          compression-level: 0
+
