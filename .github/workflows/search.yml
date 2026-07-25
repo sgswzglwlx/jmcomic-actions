@@ -1,0 +1,34 @@
+name: JM Search
+on:
+  workflow_dispatch:
+    inputs:
+      keyword:
+        description: search keyword
+        required: true
+        type: string
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install jmcomic -q
+      - run: |
+          python3 << 'PYEOF'
+from jmcomic import create_option_by_str
+opt = create_option_by_str("""
+client:
+  impl: api
+  postman:
+    type: curl_cffi
+    meta_data:
+      impersonate: chrome
+  retry_times: 5
+log: false
+""")
+client = opt.new_jm_client()
+result = client.search_album("NTR", page=1)
+for album in result:
+    print(f"{album.id} | {album.name} | {album.page_count}章 | {album.author}")
+PYEOF
