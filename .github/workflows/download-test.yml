@@ -1,0 +1,62 @@
+name: JM Download Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      album_id:
+        description: '漫画ID'
+        required: true
+        type: string
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install jmcomic
+      - name: Download Album
+        env:
+          AID: ${{ github.event.inputs.album_id }}
+        run: |
+          python3 << 'PYEOF'
+import os
+from jmcomic import download_album, create_option_by_str
+
+aid = os.environ['AID']
+print(f"[*] Downloading album: {aid}")
+
+opt = create_option_by_str("""
+client:
+  impl: api
+  postman:
+    type: curl_cffi
+    meta_data:
+      impersonate: chrome
+  retry_times: 5
+dir_rule:
+  base_dir: downloads
+  rule: Bd_Aauthor_Atitle_Pindex
+download:
+  cache: true
+  image:
+    decode: true
+  threading:
+    image: 10
+    photo: 3
+log: true
+""")
+
+result = download_album(aid, option=opt)
+print(f"[✓] Download complete!")
+print(f"Result: {result}")
+PYEOF
+      - name: List files
+        run: find downloads -type f | head -30
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jm-download
+          path: downloads/
+
