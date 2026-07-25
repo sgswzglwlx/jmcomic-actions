@@ -1,0 +1,53 @@
+name: JM Downloader
+
+on:
+  workflow_dispatch:
+    inputs:
+      ids:
+        description: '漫画ID (逗号分隔)'
+        required: true
+        type: string
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install jmcomic
+      - name: Download
+        env:
+          IDS: ${{ github.event.inputs.ids }}
+        run: |
+          python3 -c "
+import os
+from jmcomic import download_batch, create_option_by_str
+
+opt = create_option_by_str('''
+client:
+  impl: api
+  postman:
+    type: curl_cffi
+    meta_data:
+      impersonate: chrome
+  retry_times: 5
+dir_rule:
+  base_dir: downloads
+  rule: Bd_Aauthor_Atitle_Pindex
+download:
+  threading:
+    image: 30
+    photo: 8
+log: false
+''')
+ids = [x.strip() for x in os.environ['IDS'].split(',')]
+download_batch(ids, opt)
+print('Done:', ids)
+"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: comics
+          path: downloads/
+
