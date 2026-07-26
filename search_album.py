@@ -1,4 +1,4 @@
-"""搜索并下载漫画 - v4"""
+"""漫画搜索/浏览工具"""
 import sys, os, glob
 from jmcomic import create_option_by_str, download_album
 
@@ -28,53 +28,55 @@ log: false
 
 client = opt.new_jm_client()
 
-if action == "search":
-    result = client.search_tag(keyword, page=1)
-    
-    print(f"搜索 '{keyword}' 结果 ({len(result)}条):")
-    print(f"{'ID':>8} | {'标题':<40} | {'章节':>4} | {'作者':<15}")
+def print_albums(albums, title):
+    print(f"\n{title} ({len(albums)}条):")
+    print(f"{'ID':>8} | {'标题':<40} | {'章节':>4} | {'作者':<16}")
     print("-"*75)
-    
-    # search_tag 返回的是 list of tuple: (album_id, name, page_count, author, ...)
-    for album in result[:30]:
-        if isinstance(album, tuple):
-            aid, name = album[0], album[1]
-            pages = album[2] if len(album) > 2 else "?"
-            author = album[3] if len(album) > 3 else "?"
-            name_str = str(name)[:38] if name else "?"
+    for a in albums[:30]:
+        if isinstance(a, tuple):
+            aid, name = str(a[0]), str(a[1])[:38]
+            pages = str(a[2]) if len(a) > 2 else "?"
+            author = str(a[3])[:15] if len(a) > 3 else "?"
         else:
-            aid = album.id
-            name_str = album.name[:38] if album.name else "?"
-            pages = album.page_count
-            author = album.author[:15] if album.author else "?"
-        print(f"{aid:>8} | {name_str:<40} | {pages:>4} | {str(author)[:15]:<15}")
+            aid, name = str(a.id), (a.name or "?")[:38]
+            pages, author = str(a.page_count), (a.author or "?")[:15]
+        print(f"{aid:>8} | {name:<40} | {pages:>4} | {author:<15}")
 
-elif action == "search_all":
-    result = client.search("", "popular", "all", "all", "all", page=1)
-    print(f"最新漫画 ({len(result)}条):")
-    for item in result[:5]:
-        print(f"  {item}")
+if action == "hot":
+    # 热门推荐
+    result = client.search_tag("热门", page=1)
+    print_albums(result, "🔥 热门推荐")
+
+elif action == "new":
+    # 最新
+    result = search("", "latest", "all", "all", "all", page=1)
+    print_albums(result, "✨ 最新上架")
+
+elif action == "popular":
+    # 人气最高
+    result = search("", "popular", "all", "all", "all", page=1)
+    print_albums(result, "⭐ 人气最高")
+
+elif action == "tag":
+    # 按标签搜索
+    tags = ["纯爱", "NTR", "原神", "崩坏", "FGO", "碧蓝档案", "蔚蓝档案", "同人"]
+    for tag in tags:
+        try:
+            result = client.search_tag(tag, page=1)
+            if result:
+                print_albums(result, f"🏷️ {tag}")
+        except:
+            pass
+
+elif action == "search":
+    result = client.search_tag(keyword, page=1)
+    print_albums(result, f"🔍 搜索 '{keyword}'")
 
 elif action == "download":
     album_id = keyword
     print(f"下载漫画: {album_id}")
     try:
-        result = download_album(album_id, option=opt)
-        print(f"下载完成!")
-        files = glob.glob("/tmp/jm/**/*", recursive=True)
-        print(f"共 {len(files)} 个文件")
-        for f in files[:30]:
-            sz = os.path.getsize(f)
-            print(f"  {f} ({sz/1024:.0f}KB)")
+        download_album(album_id, option=opt)
+        print("下载完成!")
     except Exception as e:
         print(f"下载失败: {e}")
-
-elif action == "debug":
-    # 查看 search_tag 返回的类型
-    result = client.search_tag(keyword, page=1)
-    print(f"类型: {type(result)}")
-    print(f"长度: {len(result)}")
-    if result:
-        print(f"第一个元素类型: {type(result[0])}")
-        print(f"第一个元素内容: {result[0]}")
-        print(f"第二个元素: {result[1] if len(result)>1 else 'N/A'}")
