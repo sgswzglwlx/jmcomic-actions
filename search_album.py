@@ -28,28 +28,32 @@ log: false
 
 client = opt.new_jm_client()
 
-def get_id(a):
-    if isinstance(a, dict): return a.get('id', '?')
-    return getattr(a, 'id', '?')
-
-def get_name(a):
-    if isinstance(a, dict): return (a.get('name', a.get('title', '')) or '?')[:38]
-    return (getattr(a, 'name', '') or '?')[:38]
-
-def get_pages(a):
-    if isinstance(a, dict): return a.get('page_count', a.get('count', '?'))
-    return str(getattr(a, 'page_count', '?'))
-
-def get_author(a):
-    if isinstance(a, dict): return (a.get('author', '') or '?')[:15]
-    return (getattr(a, 'author', '') or '?')[:15]
-
 def print_albums(albums, title):
     print(f"\n{title} ({len(albums)}条):")
+    # 先看看第一个元素的结构
+    if albums:
+        a = albums[0]
+        print(f"[DEBUG] 类型: {type(a).__name__}")
+        if isinstance(a, dict):
+            print(f"[DEBUG] dict keys: {list(a.keys())}")
+            print(f"[DEBUG] 样例: {str(a)[:300]}")
+        else:
+            print(f"[DEBUG] 属性: {[x for x in dir(a) if not x.startswith('_')][:20]}")
+    
     print(f"{'ID':>8} | {'标题':<40} | {'章节':>4} | {'作者':<16}")
     print("-"*75)
     for a in albums[:30]:
-        print(f"{get_id(a):>8} | {get_name(a):<40} | {get_pages(a):>4} | {get_author(a):<15}")
+        if isinstance(a, dict):
+            aid = a.get('id', '?')
+            name = (a.get('name') or a.get('title') or '?')[:38]
+            pages = a.get('page_count', a.get('count', '?'))
+            author = (a.get('author') or '?')[:15]
+        else:
+            aid = getattr(a, 'id', '?')
+            name = (getattr(a, 'name', '') or '?')[:38]
+            pages = getattr(a, 'page_count', '?')
+            author = (getattr(a, 'author', '') or '?')[:15]
+        print(f"{str(aid):>8} | {str(name):<40} | {str(pages):>4} | {str(author):<15}")
 
 if action == "search":
     result = client.search_tag(keyword, page=1)
