@@ -20,16 +20,10 @@ client = opt.new_jm_client()
 
 def print_albums(albums, title):
     print(f"\n{title} ({len(albums)}条):")
-    if albums:
-        a = albums[0]
-        print(f"[DEBUG] 类型: {type(a).__name__}, len={len(a) if hasattr(a,'__len__') else 'N/A'}")
-        print(f"[DEBUG] 内容: {str(a)[:500]}")
-    
     print(f"{'ID':>8} | {'标题':<40} | {'章节':>4} | {'作者':<16}")
     print("-"*75)
     for a in albums[:30]:
         if isinstance(a, (list, tuple)):
-            # tuple 格式: (id, name_dict, ...)
             aid = str(a[0]) if len(a) > 0 else '?'
             if len(a) > 1 and isinstance(a[1], dict):
                 name = (a[1].get('name') or a[1].get('title') or str(a[1])[:30])[:38]
@@ -49,6 +43,25 @@ def print_albums(albums, title):
 if action == "search":
     result = client.search_tag(keyword, page=1)
     print_albums(result, f"🔍 搜索 '{keyword}'")
+
+elif action == "info":
+    aid = keyword
+    print(f"📋 漫画详情: {aid}")
+    try:
+        album = client.get_album_detail(aid)
+        print(f"标题: {album.name}")
+        print(f"作者: {album.author}")
+        print(f"章节数: {album.page_count}")
+        print(f"别名(CN): {album.alias_cn}")
+        print(f"别名(EN): {album.alias_en}")
+        print(f"ID: {album.id}")
+        # 尝试打印所有属性
+        props = album.get_properties_dict() if hasattr(album, 'get_properties_dict') else {}
+        for k, v in props.items():
+            if k not in ('id',) and v:
+                print(f"  {k}: {str(v)[:80]}")
+    except Exception as e:
+        print(f"❌ 获取失败: {e}")
 
 elif action == "download":
     print(f"📥 下载漫画: {keyword}")
