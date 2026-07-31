@@ -15,6 +15,8 @@ on:
         required: false
         default: ""
         type: string
+permissions:
+  contents: write
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -25,8 +27,26 @@ jobs:
           python-version: '3.12'
       - run: pip install jmcomic -q
       - run: python3 search_album.py ${{ github.event.inputs.mode }} "${{ github.event.inputs.keyword }}"
-      - if: ${{ github.event.inputs.mode == 'download' }}
-        uses: actions/upload-artifact@v4
+      - name: Push to downloads branch
+        if: ${{ github.event.inputs.mode == 'download' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.email "bot@users.noreply.github.com"
+          git config user.name "jm-bot"
+          # 切到 downloads 分支
+          git checkout -b downloads || git checkout downloads
+          git add -f /tmp/jm/ 2>/dev/null || true
+          # 把下载的 zip 复制到根目录
+          mkdir -p releases
+          cd /tmp/jm && find . -type f | head -5
+          cd $GITHUB_WORKSPACE
+          cp -r /tmp/jm ./downloads_${{ github.event.inputs.keyword }} 2>/dev/null || true
+          git add -f downloads_${{ github.event.inputs.keyword }} 2>/dev/null || true
+          git commit -m "Add comic ${{ github.event.inputs.keyword }}" --allow-empty 2>/dev/null || true
+          git push origin downloads --force 2>&1 | tail -3
+      - uses: actions/upload-artifact@v4
+        if: ${{ github.event.inputs.mode == 'download' }}
         with:
           name: jm-download
           path: /tmp/jm/
