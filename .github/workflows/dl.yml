@@ -10,6 +10,7 @@ on:
         options:
           - search
           - download
+          - author
       keyword:
         description: search keyword or album id
         required: false
