@@ -63,6 +63,30 @@ elif action == "info":
     except Exception as e:
         print(f"❌ 获取失败: {e}")
 
+
+elif action == "author":
+    result = client.search_author(keyword, page=1)
+    print(f"\n👤 作者 '{keyword}' 的作品 ({len(result)}条):")
+    print(f"{'ID':>8} | {'标题':<40} | {'章节':>4} | {'作者':<16}")
+    print("-"*75)
+    for a in result[:30]:
+        if isinstance(a, (list, tuple)):
+            aid = str(a[0]) if len(a) > 0 else '?'
+            if len(a) > 1 and isinstance(a[1], dict):
+                name = (a[1].get('name') or a[1].get('title') or str(a[1])[:30])[:38]
+                author = (a[1].get('author', '') or '?')[:15]
+                pages = a[1].get('page_count', a[1].get('count', '?'))
+            else:
+                name = str(a[1])[:38] if len(a) > 1 else '?'
+                author = str(a[2])[:15] if len(a) > 2 else '?'
+                pages = str(a[3]) if len(a) > 3 else '?'
+        else:
+            aid = getattr(a, 'id', '?')
+            name = (getattr(a, 'name', '') or '?')[:38]
+            pages = getattr(a, 'page_count', '?')
+            author = (getattr(a, 'author', '') or '?')[:15]
+        print(f"{str(aid):>8} | {str(name):<40} | {str(pages):>4} | {str(author):<15}")
+
 elif action == "download":
     print(f"📥 下载漫画: {keyword}")
     opt2 = create_option_by_str("""
