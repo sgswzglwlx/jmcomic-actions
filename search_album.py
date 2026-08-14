@@ -88,7 +88,7 @@ elif action == "author":
         print(f"{str(aid):>8} | {str(name):<40} | {str(pages):>4} | {str(author):<15}")
 
 elif action == "download":
-    print(f"\u{4e0b}\u8f7d\u6f2b\u753b}: {keyword}")
+    print(f"\u4e0b\u8f7d\u6f2b\u753b}: {keyword}")
     opt2 = create_option_by_str("""
 client:
   impl: api
