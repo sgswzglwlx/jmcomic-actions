@@ -35,17 +35,13 @@ jobs:
         run: |
           git config user.email "bot@users.noreply.github.com"
           git config user.name "jm-bot"
-          # 切到 downloads 分支
-          git checkout -b downloads || git checkout downloads
-          git add -f /tmp/jm/ 2>/dev/null || true
-          # 把下载的 zip 复制到根目录
+          git fetch origin downloads 2>/dev/null || true
+          git checkout -b downloads origin/downloads 2>/dev/null || git checkout -b downloads 2>/dev/null || git checkout downloads 2>/dev/null || true
           mkdir -p releases
-          cd /tmp/jm && find . -type f | head -5
-          cd $GITHUB_WORKSPACE
-          cp -r /tmp/jm ./downloads_${{ github.event.inputs.keyword }} 2>/dev/null || true
-          git add -f downloads_${{ github.event.inputs.keyword }} 2>/dev/null || true
+          cp /tmp/jm_${{ github.event.inputs.keyword }}.zip releases/ 2>/dev/null || true
+          git add -f releases/ 2>/dev/null || true
           git commit -m "Add comic ${{ github.event.inputs.keyword }}" --allow-empty 2>/dev/null || true
-          git push origin downloads --force 2>&1 | tail -3
+          git push origin downloads --force 2>&1 | tail -2
       - uses: actions/upload-artifact@v4
         if: ${{ github.event.inputs.mode == 'download' }}
         with:
