@@ -88,7 +88,7 @@ elif action == "author":
         print(f"{str(aid):>8} | {str(name):<40} | {str(pages):>4} | {str(author):<15}")
 
 elif action == "download":
-    print(f"📥 下载漫画: {keyword}")
+    print(f"\u{4e0b}\u8f7d\u6f2b\u753b}: {keyword}")
     opt2 = create_option_by_str("""
 client:
   impl: api
@@ -111,6 +111,10 @@ log: false
 """)
     try:
         download_album(keyword, option=opt2)
-        print("✅ 下载完成!")
+        print("\u2705 \u4e0b\u8f7d\u5b8c\u6210!")
+        # 打包 zip
+        import subprocess, glob
+        subprocess.run(['zip', '-r', '-q', f'/tmp/jm_{keyword}.zip', '/tmp/jm/'], check=True)
+        print(f"\u2705 \u6253\u5305\u5b8c\u6210: /tmp/jm_{keyword}.zip")
     except Exception as e:
-        print(f"❌ 下载失败: {e}")
+        print(f"\u274c \u4e0b\u8f7d\u5931\u8d25: {e}")
