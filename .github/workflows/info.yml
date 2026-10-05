@@ -1,0 +1,18 @@
+name: JM Info
+on:
+  workflow_dispatch:
+    inputs:
+      album_id:
+        description: album id
+        required: true
+        type: string
+jobs:
+  info:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install jmcomic -q
+      - run: python3 search_album.py info "${{ github.event.inputs.album_id }}"
