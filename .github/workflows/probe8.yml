@@ -1,0 +1,19 @@
+name: JM Probe8
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: dummy
+        required: false
+        default: "1"
+        type: string
+jobs:
+  probe8:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install jmcomic -q
+      - run: python3 jm_probe8.py
