@@ -15,4 +15,4 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install jmcomic -q
-      - run: python3 search_album.py info "${{ github.event.inputs.album_id }}"
+      - run: python3 jm_probe.py "${{ github.event.inputs.album_id }}"
