@@ -1,0 +1,24 @@
+name: JM Dl Multi
+on:
+  workflow_dispatch:
+    inputs:
+      ids:
+        description: album ids comma separated
+        required: true
+        type: string
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install jmcomic -q
+      - run: python3 jm_dl_multi.py "${{ github.event.inputs.ids }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jm-out
+          path: /tmp/out/
+          if-no-files-found: warn
