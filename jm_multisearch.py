@@ -43,18 +43,21 @@ def dump(items, label):
 for kw in kws:
     print(f"=== Q[{kw}] ===", flush=True)
     got = False
-    for fn in ('search', 'search_tag', 'search_album'):
-        if not hasattr(client, fn):
-            print(f"  [no method {fn}]", flush=True)
-            continue
+    try:
+        items = list(client.search(kw, 1, '', 'mr', '', '', ''))
+        print(f"  via search: {len(items)} 条", flush=True)
+        dump(items, kw)
+        got = True
+    except Exception as e:
+        print(f"  search fail: {repr(e)[:160]}", flush=True)
+    if not got:
         try:
-            items = list(getattr(client, fn)(kw, page=1))
-            print(f"  via {fn}: {len(items)} 条", flush=True)
+            items = list(client.search_tag(kw, page=1))
+            print(f"  via search_tag: {len(items)} 条", flush=True)
             dump(items, kw)
             got = True
-            break
         except Exception as e:
-            print(f"  {fn} fail: {repr(e)[:150]}", flush=True)
+            print(f"  search_tag fail: {repr(e)[:160]}", flush=True)
     if not got:
         print("  FAILED", flush=True)
 print("ALL_DONE", flush=True)
