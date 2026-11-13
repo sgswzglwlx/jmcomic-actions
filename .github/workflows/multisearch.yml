@@ -1,0 +1,18 @@
+name: JM MultiSearch
+on:
+  workflow_dispatch:
+    inputs:
+      kws:
+        description: keywords separated by |
+        required: true
+        type: string
+jobs:
+  ms:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install jmcomic -q
+      - run: python3 jm_multisearch.py "${{ github.event.inputs.kws }}"
