@@ -1,0 +1,38 @@
+name: JM Grab
+on:
+  workflow_dispatch:
+    inputs:
+      ids:
+        description: id csv
+        required: true
+        type: string
+      tag:
+        description: release tag
+        required: true
+        type: string
+permissions:
+  contents: write
+jobs:
+  grab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install jmcomic -q
+      - run: python3 jm_grab.py "${{ github.event.inputs.ids }}"
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.inputs.tag }}
+        run: |
+          cp /tmp/manifest.txt /tmp/清单.txt
+          gh release create "$TAG" /tmp/out.zip /tmp/manifest.txt             --repo "${{ github.repository }}" --title "JM $TAG" --notes "auto batch" \
+            || gh release upload "$TAG" /tmp/out.zip /tmp/manifest.txt --clobber --repo "${{ github.repository }}"
+          gh release view "$TAG" --repo "${{ github.repository }}" --json assets -q '.assets[] | "\(.name) \(.size)"'
+      - uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: jm-grab
+          path: /tmp/out.zip
