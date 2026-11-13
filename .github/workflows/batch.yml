@@ -1,0 +1,22 @@
+name: JM Batch
+on:
+  workflow_dispatch:
+    inputs:
+      ids:
+        description: id csv
+        required: true
+        type: string
+jobs:
+  batch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install jmcomic -q
+      - run: python3 jm_batch.py "${{ github.event.inputs.ids }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jm-batch
+          path: /tmp/jm/
