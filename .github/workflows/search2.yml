@@ -1,0 +1,23 @@
+name: JM Search2
+on:
+  workflow_dispatch:
+    inputs:
+      kw:
+        description: keyword
+        required: true
+        type: string
+      pages:
+        description: pages
+        required: false
+        default: '3'
+        type: string
+jobs:
+  s:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install jmcomic -q
+      - run: python3 jm_search.py "${{ github.event.inputs.kw }}" "${{ github.event.inputs.pages }}"
