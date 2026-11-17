@@ -1,0 +1,23 @@
+name: JM Search Multi
+on:
+  workflow_dispatch:
+    inputs:
+      kws:
+        description: kws csv
+        required: true
+        type: string
+      pages:
+        description: pages per kw
+        required: false
+        default: '2'
+        type: string
+jobs:
+  s:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install jmcomic -q
+      - run: python3 jm_search_multi.py "${{ github.event.inputs.kws }}" "${{ github.event.inputs.pages }}"
